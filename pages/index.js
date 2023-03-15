@@ -1,47 +1,58 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from '@next/font/google'
-import styles from '@/styles/Home.module.css'
-
-import { useState } from 'react'
-
-const inter = Inter({ subsets: ['latin'] })
+import { useState, useEffect } from 'react'
 
 export default function Home() {
+  const [name, setName] = useState('')
+  const [age, setAge] = useState('')
+  const [users, setUsers] = useState([])
 
-  const [name, namefunc] = useState('')
-  const [age, agefunc] = useState('')
+  const handleDelete = async (id) => {
+    const response = await fetch(`/api/users/delete?id=${id}`, { method: 'DELETE' })
+    const data = await response.json()
+    setUsers(data)
+  }
 
-  const handlesubmit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const response = await fetch('/api/create',{
+    const response = await fetch('/api/users/create', {
       method: 'POST',
       headers: {
-        'Content-Type' : 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({name,age})
+      body: JSON.stringify({ name, age }),
     })
+    const data = await response.json()
+    setUsers(data)
+  }
 
-    if(response.ok){
-      console.log('success')
-    }else{
-      console.log('error')
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch('/api/users/read')
+      const data = await response.json()
+      setUsers(data)
     }
-  } 
+    fetchData()
+  }, [])
+
   return (
-    <form onSubmit={handlesubmit}>
-
-      <label> Name
-        <input type = "text" name = "name" value = {name} onChange={(event) => namefunc(event.target.value)}></input>
+    <form onSubmit={handleSubmit}>
+      <label>
+        Name:
+        <input type="text" value={name} onChange={(event) => setName(event.target.value)} />
       </label>
-
-      <label> Age
-        <input type = "number" name = "age" value = {age} onChange={(event) => agefunc(event.target.value)}></input>
+      <label>
+        Age:
+        <input type="number" value={age} onChange={(event) => setAge(event.target.value)} />
       </label>
-
-      <button type="submit">create</button>
-
+      <button type="submit">Create</button>
+      <ul>
+        {users.map((user) => (
+          <li key={user._id}>
+            {user.name} ({user.age})
+            <button onClick={() => handleDelete(user._id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
     </form>
   )
 }
